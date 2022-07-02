@@ -1,5 +1,6 @@
 const canvasSketch = require("canvas-sketch");
 const random = require("canvas-sketch-util/random");
+const math = require("canvas-sketch-util/math");
 
 const settings = {
   dimensions: [1080, 1080],
@@ -28,6 +29,30 @@ const sketch = ({ context, width, height }) => {
     context.fillStyle = "white";
     context.fillRect(0, 0, width, height);
 
+    // nested loop that creates connected lines
+    for (let i = 0; i < agents.length; i++) {
+      const agent = agents[i];
+
+      // to optimise the nested loop we start at i + 1; this reduces the number of iterations
+      for (let j = i + 1; j < agents.length; j++) {
+        const other = agents[j];
+
+        const dist = agent.position.hypotenuse(other.position);
+
+        // Only display lines less than 200
+        if (dist > 200) continue;
+
+        // create thick lines when close and thin lines as distance increases
+        context.lineWidth = math.mapRange(dist, 0, 200, 12, 1);
+
+        // create lines between points
+        context.beginPath();
+        context.moveTo(agent.position.xCoordinate, agent.position.yCoordinate);
+        context.lineTo(other.position.xCoordinate, other.position.yCoordinate);
+        context.stroke();
+      }
+    }
+
     agents.forEach((agent) => {
       agent.update();
       agent.draw(context);
@@ -50,6 +75,15 @@ class Vector {
   constructor(xParameter, yParameter) {
     this.xCoordinate = xParameter;
     this.yCoordinate = yParameter;
+  }
+
+  // the Pythagorean equation as a function c = a^2 + b^2
+  // used to calculate the hypotenuse between points
+  hypotenuse(vector) {
+    const a = this.xCoordinate - vector.xCoordinate;
+    const b = this.yCoordinate - vector.yCoordinate;
+
+    return Math.sqrt(a * a + b * b);
   }
 }
 
