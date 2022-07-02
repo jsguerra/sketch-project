@@ -31,6 +31,7 @@ const sketch = ({ context, width, height }) => {
     agents.forEach((agent) => {
       agent.update();
       agent.draw(context);
+      agent.bounce(width, height);
     });
   };
 };
@@ -57,6 +58,14 @@ class Agent {
     this.position = new Vector(xParameter, yParameter);
     this.velocity = new Vector(random.range(-1, 1), random.range(-1, 1));
     this.radius = random.range(4, 12); // create random radius
+  }
+
+  // Method that sets boundaries and inverts velocity when it hits boundary
+  bounce(width, height) {
+    if (this.position.xCoordinate <= 0 || this.position.xCoordinate >= width)
+      this.velocity.xCoordinate *= -1;
+    if (this.position.yCoordinate <= 0 || this.position.yCoordinate >= height)
+      this.velocity.yCoordinate *= -1;
   }
 
   // Method that animates points
