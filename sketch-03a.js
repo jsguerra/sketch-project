@@ -3,7 +3,16 @@ const random = require("canvas-sketch-util/random");
 
 const settings = {
   dimensions: [1080, 1080],
+  animate: true,
 };
+
+// The animate settings calls a function such as the example below
+// This is how to animate in javascript without a library
+// const exampleAnimateFn = () => {
+//   console.log("domestica");
+//   requestAnimationFrame(exampleAnimateFn);
+// };
+// exampleAnimateFn();
 
 const sketch = ({ context, width, height }) => {
   const agents = [];
@@ -20,6 +29,7 @@ const sketch = ({ context, width, height }) => {
     context.fillRect(0, 0, width, height);
 
     agents.forEach((agent) => {
+      agent.update();
       agent.draw(context);
     });
   };
@@ -27,7 +37,15 @@ const sketch = ({ context, width, height }) => {
 
 canvasSketch(sketch, settings);
 
-class Point {
+// class Point {
+//   constructor(xParameter, yParameter) {
+//     this.xCoordinate = xParameter;
+//     this.yCoordinate = yParameter;
+//   }
+// }
+
+// Refactored class Point to Vector to better describe it
+class Vector {
   constructor(xParameter, yParameter) {
     this.xCoordinate = xParameter;
     this.yCoordinate = yParameter;
@@ -36,21 +54,31 @@ class Point {
 
 class Agent {
   constructor(xParameter, yParameter) {
-    this.position = new Point(xParameter, yParameter);
-    this.radius = 10;
+    this.position = new Vector(xParameter, yParameter);
+    this.velocity = new Vector(random.range(-1, 1), random.range(-1, 1));
+    this.radius = random.range(4, 12); // create random radius
   }
 
+  // Method that animates points
+  update() {
+    this.position.xCoordinate += this.velocity.xCoordinate;
+    this.position.yCoordinate += this.velocity.yCoordinate;
+  }
+
+  // Method that draws points or objects
   draw(context) {
-    context.fillStyle = "black";
+    // context.fillStyle = "black";
+
+    context.save();
+    context.translate(this.position.xCoordinate, this.position.yCoordinate);
+
+    context.lineWidth = 4; // stroke thickness
 
     context.beginPath();
-    context.arc(
-      this.position.xCoordinate,
-      this.position.yCoordinate,
-      this.radius,
-      0,
-      Math.PI * 2
-    );
+    context.arc(0, 0, this.radius, 0, Math.PI * 2);
     context.fill();
+    context.stroke(); // default stroke is black
+
+    context.restore();
   }
 }
