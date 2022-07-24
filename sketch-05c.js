@@ -1,4 +1,5 @@
 const canvasSketch = require("canvas-sketch");
+const random = require('canvas-sketch-util/random');
 
 const settings = {
   dimensions: [1080, 1080],
@@ -28,8 +29,7 @@ const sketch = ({ context, width, height }) => {
     typeContext.fillStyle = "black";
     typeContext.fillRect(0, 0, cols, rows);
 
-    fontSize = cols;
-    console.log(fontSize);
+    fontSize = cols * 1.2;
 
     typeContext.fillStyle = "white";
     typeContext.font = `${fontSize}px ${fontFamily}`;
@@ -59,7 +59,13 @@ const sketch = ({ context, width, height }) => {
     // Get image data from typeContext
     const typeData = typeContext.getImageData(0, 0, cols, rows).data;
 
-    context.drawImage(typeCanvas, 0, 0);
+    context.fillStyle = 'black';
+    context.fillRect(0, 0, width, height);
+
+    context.textBaseline = 'middle';
+    context.textAlign = 'center';
+
+    // context.drawImage(typeCanvas, 0, 0);
 
     for (let i = 0; i < numCells; i++) {
       const column = i % cols;
@@ -74,7 +80,13 @@ const sketch = ({ context, width, height }) => {
       const b = typeData[i * 4 + 2];
       const a = typeData[i * 4 + 3];
 
-      context.fillStyle = `rgb(${r}, ${g}, ${b})`;
+      // We are using only the r value from rgba
+      const glyph = getGlyph(r);
+
+      context.font = `${cell * 2}px ${fontFamily}`;
+      if (Math.random() < 0.1) context.font = `${cell * 6}px ${fontFamily}`;
+
+      context.fillStyle = 'white';
 
       // Draw a new square
       context.save();
@@ -84,14 +96,29 @@ const sketch = ({ context, width, height }) => {
       // context.fillRect(0, 0, cell, cell);
 
       // If not using squares we can use circles
-      context.beginPath();
-      context.arc(0, 0, cell * 0.5, 0, Math.PI * 2);
-      context.fill();
+      // context.beginPath();
+      // context.arc(0, 0, cell * 0.5, 0, Math.PI * 2);
+      // context.fill();
+
+      // We use glyphs instead of geometric shapes
+      context.fillText(glyph, 0, 0);
 
       context.restore();
     }
   };
 };
+
+// The Glyph function
+const getGlyph = (rgbaValue) => {
+  if (rgbaValue < 50) return '';
+  if (rgbaValue < 100) return '.';
+  if (rgbaValue < 150) return '-';
+  if (rgbaValue < 200) return '+';
+
+  const glyphs = '_= /'.split('');
+
+  return random.pick(glyphs);
+}
 
 // We listen to our events, assign a new letter and render a new frame
 const onKeyUp = (e) => {
