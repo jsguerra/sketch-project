@@ -12,16 +12,30 @@ let text = "A";
 let fontSize = "1200";
 let fontFamily = "serif";
 
-const sketch = () => {
+const typeCanvas = document.createElement("canvas");
+const typeContext = typeCanvas.getContext("2d");
+
+const sketch = ({ context, width, height }) => {
+  const cell = 20;
+  const cols = Math.floor(width / cell);
+  const rows = Math.floor(height / cell);
+  const numCells = cols * rows;
+
+  typeCanvas.width = cols;
+  typeCanvas.height = rows;
+
   return ({ context, width, height }) => {
-    context.fillStyle = "white";
-    context.fillRect(0, 0, width, height);
+    typeContext.fillStyle = "black";
+    typeContext.fillRect(0, 0, cols, rows);
 
-    context.fillStyle = "black";
-    context.font = `${fontSize}px ${fontFamily}`;
-    context.textBaseline = "top";
+    fontSize = cols;
+    console.log(fontSize);
 
-    const metrics = context.measureText(text);
+    typeContext.fillStyle = "white";
+    typeContext.font = `${fontSize}px ${fontFamily}`;
+    typeContext.textBaseline = "top";
+
+    const metrics = typeContext.measureText(text);
     const metricsXcoord = metrics.actualBoundingBoxLeft * -1;
     const metricsYcoord = metrics.actualBoundingBoxAscent * -1;
     const metricsWidth =
@@ -29,18 +43,53 @@ const sketch = () => {
     const metricsHeight =
       metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
 
-    const xCoord = (width - metricsWidth) * 0.5 - metricsXcoord;
-    const yCoord = (height - metricsHeight) * 0.5 - metricsYcoord;
+    const xCoord = (cols - metricsWidth) * 0.5 - metricsXcoord;
+    const yCoord = (rows - metricsHeight) * 0.5 - metricsYcoord;
 
-    context.save();
-    context.translate(xCoord, yCoord);
+    typeContext.save();
+    typeContext.translate(xCoord, yCoord);
 
-    context.beginPath();
-    context.rect(metricsXcoord, metricsYcoord, metricsWidth, metricsHeight);
-    context.stroke();
+    typeContext.beginPath();
+    typeContext.rect(metricsXcoord, metricsYcoord, metricsWidth, metricsHeight);
+    typeContext.stroke();
 
-    context.fillText(text, 0, 0);
-    context.restore();
+    typeContext.fillText(text, 0, 0);
+    typeContext.restore();
+
+    // Get image data from typeContext
+    const typeData = typeContext.getImageData(0, 0, cols, rows).data;
+
+    context.drawImage(typeCanvas, 0, 0);
+
+    for (let i = 0; i < numCells; i++) {
+      const column = i % cols;
+      const row = Math.floor(i / cols);
+
+      const itemXcoord = column * cell;
+      const itemYcoord = row * cell;
+
+      // RGBA values from typeData colour values
+      const r = typeData[i * 4 + 0]; // index * number of chanels + reference channel (not needed)
+      const g = typeData[i * 4 + 1];
+      const b = typeData[i * 4 + 2];
+      const a = typeData[i * 4 + 3];
+
+      context.fillStyle = `rgb(${r}, ${g}, ${b})`;
+
+      // Draw a new square
+      context.save();
+      context.translate(itemXcoord, itemYcoord);
+      // We add an extra translate to align the cirlces below to the canvas
+      context.translate(cell * 0.5, cell * 0.5);
+      // context.fillRect(0, 0, cell, cell);
+
+      // If not using squares we can use circles
+      context.beginPath();
+      context.arc(0, 0, cell * 0.5, 0, Math.PI * 2);
+      context.fill();
+
+      context.restore();
+    }
   };
 };
 
